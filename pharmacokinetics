@@ -1,0 +1,29 @@
+from pandas import read_csv
+from modsim import *
+
+data = read_csv("glucose_insulin.csv", index_col="time")
+
+
+t_0 = data.index[0]
+t_end = data.index[-1]
+t_array = linrange(t_0, t_end)
+
+G = interpolate(data.glucose, kind="linear")
+G_array = G(t_array)
+G_series = make_series(t_array, G_array)
+data.glucose.plot(style = "o", color="C1", label="Glucose data")
+G_series.plot(color="C1", label="Interpolated glucose data")
+
+
+I = interpolate(data.insulin, kind="linear")
+I_array = I(t_array)
+I_series = make_series(t_array, I_array)
+data.insulin.plot(style="o", color="C2", label="Insulin data")
+I_series.plot(color="C2", label="Interploated insulin data")
+
+decorate(xlabel="Time", ylabel="Concentration")
+
+plt.show()
+
+
+
