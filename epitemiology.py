@@ -107,8 +107,7 @@ system = make_system(beta, gamma, 7*14)
 beta_arr = linspace(0.1, 1.1, 11)
 gamma_arr = linspace(0.1, 0.7, 4)
 
-"""
-C vs MAX I
+
 
 frame = SweepFrame(columns = gamma_arr)
 for gamma in gamma_arr:
@@ -116,10 +115,11 @@ for gamma in gamma_arr:
 
 plot_sweep_frame(frame)
 plt.show()
-"""
+
 
 """
 BETA - GAMMA vs FRACTION INFECTED
+
 sweep_frame = sweep_parameters(beta_arr, gamma_arr)
 plot_sweep_frame_diff(sweep_frame)
 decorate(xlabel = "beta - gamma", ylabel = "fraction infected")

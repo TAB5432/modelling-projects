@@ -3,27 +3,82 @@ from modsim import *
 
 data = read_csv("glucose_insulin.csv", index_col="time")
 
+G0 = 270
+k1 = 0.02
+k2 = 0.02
+k3 = 1.5e-5
 
-t_0 = data.index[0]
-t_end = data.index[-1]
-t_array = linrange(t_0, t_end)
+params = G0, k1, k2, k3
 
-G = interpolate(data.glucose, kind="linear")
-G_array = G(t_array)
-G_series = make_series(t_array, G_array)
-data.glucose.plot(style = "o", color="C1", label="Glucose data")
-G_series.plot(color="C1", label="Interpolated glucose data")
+def make_system(params, data, dt=2):
+    G0, k1, k2, k3 = params
+
+    t_0 = data.index[0]
+    t_end = data.index[-1]
+
+    Gb = data.glucose[t_0]
+    Ib = data.insulin[t_0]
+    I = interpolate(data.insulin)
+
+    init = State(G=G0, X=0)
+
+    return System(init=init, params=params, Gb=Gb, Ib=Ib, I=I, t_0=t_0, t_end=t_end, dt=dt)
+
+def update_func(t, state, system):
+    G, X = state
+    G0, k1, k2, k3 = system.params
+    I, Ib, Gb = system.I, system.Ib, system.Gb
+    dt = system.dt
+
+    dGdt = -k1 * (G-Gb) - X*G
+    dXdt = k3 * (I(t)-Ib) - k2*X
+
+    G += dGdt * dt
+    X += dXdt * dt
+
+    return State(G=G, X=X)
+
+def run_sim(system, update_func):
+    t_arr = linrange(system.t_0, system.t_end, system.dt)
+    n = len(t_arr)
+
+    frame = TimeFrame(index=t_arr, columns=system.init.index)
+    frame.iloc[0] = system.init
+
+    for i in range(n-1):
+        t = t_arr[i]
+        state = frame.iloc[i]
+        frame.iloc[i+1] = update_func(t, state, system)
+
+    return frame
+
+def slope_func(t, state, system):
+    G, X = state
+    G0, k1, k2, k3 = system.params
+    I, Ib, Gb = system.I, system.Ib, system.Gb
+
+    dGdt = -k1 * (G-Gb) - X*G
+    dXdt = k3 * (I(t)-Ib) - k2*X
+
+    return dGdt, dXdt
 
 
-I = interpolate(data.insulin, kind="linear")
-I_array = I(t_array)
-I_series = make_series(t_array, I_array)
-data.insulin.plot(style="o", color="C2", label="Insulin data")
-I_series.plot(color="C2", label="Interploated insulin data")
+#GLUCOSE & COMPARE WITH SOLVE IVP
 
+system = make_system(params, data)
+system_low_dt = make_system(params, data, 1)
+
+results = run_sim(system, update_func)
+results2, details = run_solve_ivp(system, slope_func, t_eval=results.index)
+results3 = run_sim(system_low_dt, update_func)
+
+diff = results.G - results3.G 
+percent_diff = diff / results3.G * 100
+print(percent_diff.abs().describe())
+
+results.G.plot(label="Simulation")
+results2.G.plot(color="C1", style="--", label="Solve IVP")
 decorate(xlabel="Time", ylabel="Concentration")
-
 plt.show()
-
 
 
