@@ -1,4 +1,4 @@
-#!/home/toby-atkinson/Code/modelling/myenv/bin/python3
+#!/home/toby-atkinson/modelling-projects/myenv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
