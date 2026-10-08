@@ -160,5 +160,3 @@ results = run_sim(coffee, change_func)
 results.plot()
 plt.show()
 """
-
-
